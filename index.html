@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dev.log — Your Name</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --surface: #13161b;
+      --surface2: #1c2028;
+      --border: #272c35;
+      --text: #e8eaf0;
+      --muted: #7a8294;
+      --accent: #00e5a0;
+      --accent2: #0099ff;
+      --tag-bg: rgba(0, 229, 160, 0.08);
+      --font-mono: 'Syne Mono', monospace;
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise texture overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    /* ── Layout ── */
+    .wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Navigation ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 15, 18, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+    }
+
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--accent);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-logo span { color: var(--muted); }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 90px 0 70px;
+      position: relative;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -200px; right: -200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.3;
+    }
+
+    .hero-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.1s forwards;
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 22px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.2s forwards;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-bio {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 540px;
+      line-height: 1.75;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.3s forwards;
+    }
+
+    .hero-links {
+      display: flex;
+      gap: 16px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.4s forwards;
+    }
+
+    .hero-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 7px 14px;
+      transition: all 0.2s;
+    }
+
+    .hero-link:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--tag-bg);
+    }
+
+    /* ── Section titles ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Blog post cards ── */
+    .posts-section { padding-bottom: 80px; }
+
+    .post-card {
+      display: block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px 32px;
+      margin-bottom: 18px;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.2s;
+      opacity: 0;
+      animation: fadeUp 0.5s forwards;
+    }
+
+    .post-card:nth-child(1) { animation-delay: 0.1s; }
+    .post-card:nth-child(2) { animation-delay: 0.2s; }
+    .post-card:nth-child(3) { animation-delay: 0.3s; }
+    .post-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .post-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform 0.25s ease;
+    }
+
+    .post-card:hover {
+      border-color: rgba(0, 229, 160, 0.3);
+      transform: translateX(4px);
+    }
+
+    .post-card:hover::before { transform: scaleY(1); }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .post-date {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .post-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--accent);
+      background: var(--tag-bg);
+      border: 1px solid rgba(0, 229, 160, 0.2);
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .post-title {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.35;
+      margin-bottom: 10px;
+      transition: color 0.2s;
+    }
+
+    .post-card:hover .post-title { color: var(--accent); }
+
+    .post-excerpt {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .post-arrow {
+      position: absolute;
+      right: 28px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      color: var(--border);
+      transition: color 0.2s, right 0.2s;
+    }
+
+    .post-card:hover .post-arrow {
+      color: var(--accent);
+      right: 22px;
+    }
+
+    /* ── Projects section ── */
+    .projects-section { padding-bottom: 80px; }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px 24px;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .project-card:hover {
+      border-color: rgba(0, 153, 255, 0.4);
+      background: var(--surface2);
+    }
+
+    .project-icon {
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+
+    .project-name {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--accent2);
+      margin-bottom: 6px;
+    }
+
+    .project-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .project-stack {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .stack-tag {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .footer-copy span { color: var(--accent); }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .nav-links { gap: 16px; }
+      .post-card { padding: 22px 20px; }
+      .post-arrow { display: none; }
+      .projects-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navigation ── -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">dev<span>.</span>log<span>_</span></a>
+      <ul class="nav-links">
+        <li><a href="#posts">Blog</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="https://github.com/yourusername" target="_blank">GitHub</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <div class="wrapper">
+    <section class="hero">
+      <p class="hero-label">// software developer & writer</p>
+      <h1 class="hero-title">
+        Hi, I'm <em>Your Name.</em><br>I build things & write about it.
+      </h1>
+      <p class="hero-bio">
+        Full-stack developer with a passion for clean code, open source, and writing about what I learn.
+        Mostly working with JavaScript, Python, and whatever interesting problem comes next.
+      </p>
+      <div class="hero-links">
+        <a href="https://github.com/yourusername" class="hero-link" target="_blank">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          github
+        </a>
+        <a href="mailto:you@email.com" class="hero-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          email
+        </a>
+        <a href="/rss.xml" class="hero-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
+          rss
+        </a>
+      </div>
+    </section>
+
+    <!-- ── Blog Posts ── -->
+    <section class="posts-section" id="posts">
+      <div class="section-header">
+        <span class="section-label">recent posts</span>
+        <div class="section-line"></div>
+      </div>
+
+      <!-- Post 1 -->
+      <a href="/posts/post-1.html" class="post-card">
+        <div class="post-meta">
+          <span class="post-date">2025-03-10</span>
+          <span class="post-tag">tutorial</span>
+        </div>
+        <h2 class="post-title">How I Automated My Deployment Pipeline with GitHub Actions</h2>
+        <p class="post-excerpt">A walkthrough of the CI/CD setup I use for all my side projects — from linting to prod in under 3 minutes.</p>
+        <span class="post-arrow">→</span>
+      </a>
+
+      <!-- Post 2 -->
+      <a href="/posts/post-2.html" class="post-card">
+        <div class="post-meta">
+          <span class="post-date">2025-02-24</span>
+          <span class="post-tag">deep dive</span>
+        </div>
+        <h2 class="post-title">Understanding JavaScript Closures — Finally, for Real</h2>
+        <p class="post-excerpt">After years of hand-waving past closures, I finally sat down and worked through every detail. Here's what clicked.</p>
+        <span class="post-arrow">→</span>
+      </a>
+
+      <!-- Post 3 -->
+      <a href="/posts/post-3.html" class="post-card">
+        <div class="post-meta">
+          <span class="post-date">2025-02-08</span>
+          <span class="post-tag">opinion</span>
+        </div>
+        <h2 class="post-title">Why I Switched Back to Plain SQL (and Ditched the ORM)</h2>
+        <p class="post-excerpt">ORMs are great until they're not. My experience moving from Prisma back to raw queries and what I learned along the way.</p>
+        <span class="post-arrow">→</span>
+      </a>
+
+      <!-- Post 4 -->
+      <a href="/posts/post-4.html" class="post-card">
+        <div class="post-meta">
+          <span class="post-date">2025-01-19</span>
+          <span class="post-tag">tools</span>
+        </div>
+        <h2 class="post-title">My 2025 Dev Setup: Terminal, Editor, and Workflow</h2>
+        <p class="post-excerpt">A full breakdown of the tools, dotfiles, and configs that power my daily development workflow this year.</p>
+        <span class="post-arrow">→</span>
+      </a>
+    </section>
+
+    <!-- ── Projects ── -->
+    <section class="projects-section" id="projects">
+      <div class="section-header">
+        <span class="section-label">projects</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="projects-grid">
+
+        <a href="https://github.com/yourusername/project-1" class="project-card" target="_blank">
+          <div class="project-icon">🛠</div>
+          <div class="project-name">project-one</div>
+          <p class="project-desc">A short description of what this project does and the problem it solves.</p>
+          <div class="project-stack">
+            <span class="stack-tag">TypeScript</span>
+            <span class="stack-tag">Node.js</span>
+            <span class="stack-tag">PostgreSQL</span>
+          </div>
+        </a>
+
+        <a href="https://github.com/yourusername/project-2" class="project-card" target="_blank">
+          <div class="project-icon">⚡</div>
+          <div class="project-name">project-two</div>
+          <p class="project-desc">Another cool thing I built. Replace this with your real project description.</p>
+          <div class="project-stack">
+            <span class="stack-tag">Python</span>
+            <span class="stack-tag">FastAPI</span>
+            <span class="stack-tag">Docker</span>
+          </div>
+        </a>
+
+        <a href="https://github.com/yourusername/project-3" class="project-card" target="_blank">
+          <div class="project-icon">🔬</div>
+          <div class="project-name">project-three</div>
+          <p class="project-desc">Open source experiment I worked on. Link it to your real GitHub repo.</p>
+          <div class="project-stack">
+            <span class="stack-tag">React</span>
+            <span class="stack-tag">Vite</span>
+            <span class="stack-tag">TailwindCSS</span>
+          </div>
+        </a>
+
+      </div>
+    </section>
+  </div><!-- /wrapper -->
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="footer-inner">
+      <p class="footer-copy">© 2025 <span>Your Name</span> — built with ♥ & GitHub Pages</p>
+      <ul class="footer-links">
+        <li><a href="https://github.com/yourusername" target="_blank">GitHub</a></li>
+        <li><a href="https://twitter.com/yourhandle" target="_blank">Twitter</a></li>
+        <li><a href="mailto:you@email.com">Email</a></li>
+      </ul>
+    </div>
+  </footer>
+
+</body>
+</html>
