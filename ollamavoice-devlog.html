@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OllamaVoice Dev Log — Building a Local AI Voice Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080810;
+      --surface: #0f0f1a;
+      --border: #1e1e30;
+      --accent: #e8ff47;
+      --accent2: #47ffe8;
+      --accent3: #ff47b8;
+      --text: #c8c8e0;
+      --text-dim: #5a5a7a;
+      --mono: 'Space Mono', monospace;
+      --sans: 'Syne', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(232,255,71,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232,255,71,.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap { max-width: 860px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
+
+    /* ── NAV ── */
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      background: rgba(8,8,16,.9);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: .15em; }
+    .nav-logo span { color: var(--text-dim); }
+    .nav-tag {
+      font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+      color: var(--text-dim); border: 1px solid var(--border);
+      padding: 4px 10px; text-transform: uppercase;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 100px 0 80px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-family: var(--mono); font-size: 11px; letter-spacing: .2em;
+      color: var(--accent2); text-transform: uppercase; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .hero-eyebrow::before {
+      content: ''; display: block; width: 32px; height: 1px; background: var(--accent2);
+    }
+    h1 {
+      font-size: clamp(38px, 6vw, 72px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -.02em;
+      margin-bottom: 28px;
+      color: #fff;
+    }
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
+      position: relative;
+      display: inline-block;
+    }
+    h1 em::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+      opacity: .4;
+    }
+    .hero-sub {
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--text-dim);
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+    .hero-meta {
+      display: flex; gap: 24px; flex-wrap: wrap;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-dim); letter-spacing: .1em;
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 8px; }
+    .dot-live {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+    /* ── SECTIONS ── */
+    .section { padding: 72px 0; border-bottom: 1px solid var(--border); }
+    .section:last-child { border-bottom: none; }
+
+    .section-label {
+      font-family: var(--mono); font-size: 10px; letter-spacing: .2em;
+      color: var(--text-dim); text-transform: uppercase; margin-bottom: 32px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    h2 {
+      font-size: 32px; font-weight: 700; color: #fff;
+      letter-spacing: -.02em; margin-bottom: 20px; line-height: 1.2;
+    }
+    h3 {
+      font-size: 16px; font-weight: 700; color: var(--accent);
+      letter-spacing: .05em; text-transform: uppercase;
+      margin: 36px 0 12px; font-family: var(--mono);
+    }
+    p { font-size: 16px; line-height: 1.8; color: var(--text); margin-bottom: 20px; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── CHANGELOG CARDS ── */
+    .changelog { display: flex; flex-direction: column; gap: 16px; margin-top: 32px; }
+    .change-card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 20px 24px;
+      display: flex; gap: 20px; align-items: flex-start;
+      transition: border-color .2s;
+      position: relative; overflow: hidden;
+    }
+    .change-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px;
+    }
+    .change-card.fixed::before  { background: var(--accent2); }
+    .change-card.new::before    { background: var(--accent); }
+    .change-card.arch::before   { background: var(--accent3); }
+    .change-card:hover { border-color: #2e2e48; }
+    .change-tag {
+      font-family: var(--mono); font-size: 9px; letter-spacing: .15em;
+      padding: 3px 8px; text-transform: uppercase; flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .change-card.fixed .change-tag  { background: rgba(71,255,232,.1); color: var(--accent2); border: 1px solid rgba(71,255,232,.2); }
+    .change-card.new .change-tag    { background: rgba(232,255,71,.1); color: var(--accent); border: 1px solid rgba(232,255,71,.2); }
+    .change-card.arch .change-tag   { background: rgba(255,71,184,.1); color: var(--accent3); border: 1px solid rgba(255,71,184,.2); }
+    .change-body strong { color: #fff; display: block; font-size: 14px; margin-bottom: 5px; font-family: var(--sans); font-weight: 600; }
+    .change-body p { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin: 0; }
+
+    /* ── STACK TABLE ── */
+    .stack-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-top: 28px;
+    }
+    @media(max-width: 600px) { .stack-grid { grid-template-columns: 1fr; } }
+    .stack-item {
+      border: 1px solid var(--border); background: var(--surface);
+      padding: 16px 20px;
+    }
+    .stack-item .si-label {
+      font-family: var(--mono); font-size: 10px; letter-spacing: .15em;
+      color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px;
+    }
+    .stack-item .si-val { font-size: 14px; color: #fff; font-weight: 600; }
+    .stack-item .si-note { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+
+    /* ── VISION BLOCKS ── */
+    .vision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 28px; }
+    @media(max-width: 620px) { .vision-grid { grid-template-columns: 1fr; } }
+    .vision-card {
+      border: 1px solid var(--border); background: var(--surface);
+      padding: 24px; position: relative; overflow: hidden;
+    }
+    .vision-card::after {
+      content: ''; position: absolute; bottom: -30px; right: -30px;
+      width: 100px; height: 100px; border-radius: 50%;
+      opacity: .06;
+    }
+    .vision-card.v1::after { background: var(--accent); }
+    .vision-card.v2::after { background: var(--accent2); }
+    .vision-card.v3::after { background: var(--accent3); }
+    .vision-card.v4::after { background: #47b8ff; }
+    .vision-num {
+      font-family: var(--mono); font-size: 36px; font-weight: 700;
+      color: var(--border); line-height: 1; margin-bottom: 16px;
+    }
+    .vision-card h4 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+    .vision-card p { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin: 0; }
+
+    /* ── QUOTE BLOCK ── */
+    .pullquote {
+      border-left: 3px solid var(--accent);
+      padding: 20px 28px;
+      margin: 36px 0;
+      background: rgba(232,255,71,.03);
+    }
+    .pullquote p {
+      font-size: 19px; font-style: italic; color: #fff;
+      line-height: 1.6; margin: 0;
+    }
+
+    /* ── CODE INLINE ── */
+    code {
+      font-family: var(--mono); font-size: .85em;
+      background: rgba(255,255,255,.06); padding: 2px 6px;
+      color: var(--accent2);
+    }
+
+    /* ── LINKS ── */
+    a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(232,255,71,.3); transition: border-color .2s; }
+    a:hover { border-color: var(--accent); }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 48px 0; border-top: 1px solid var(--border);
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      letter-spacing: .08em;
+    }
+    footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="nav-logo">VOICE <span>//</span> OLLAMA</div>
+    <div class="nav-tag">Dev Log</div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Project Update — March 2026</div>
+    <h1>Building <em>Jarvis</em> at Home:<br>A Fully Local AI<br>Voice Assistant</h1>
+    <p class="hero-sub">
+      A deep-dive into OllamaVoice v1.2 — how we went from text-only chat
+      to a real-time, locally-rendered, Jarvis-style voice interface running
+      entirely on consumer hardware.
+    </p>
+    <div class="hero-meta">
+      <span><span class="dot-live"></span>OllamaVoice v1.2</span>
+      <span>RTX 5090 · 32GB VRAM</span>
+      <span>Kokoro TTS · Ollama · faster-whisper</span>
+    </div>
+  </section>
+
+  <!-- WHAT WE BUILT -->
+  <section class="section">
+    <div class="section-label">Overview</div>
+    <h2>What Is OllamaVoice?</h2>
+    <p>
+      OllamaVoice is a Windows desktop application that chains together three
+      locally-running AI systems into a single voice interface: you speak, the app
+      transcribes your voice using OpenAI Whisper, sends the text to a large language
+      model running in Docker via Ollama, and reads the response back to you using
+      Kokoro TTS in a deep British male voice — the closest local approximation of
+      Jarvis from the Iron Man films.
+    </p>
+    <p>
+      Everything runs on your own hardware. No cloud calls, no API keys, no
+      subscriptions. After the initial model downloads your internet connection
+      is irrelevant.
+    </p>
+
+    <div class="stack-grid">
+      <div class="stack-item">
+        <div class="si-label">Speech → Text</div>
+        <div class="si-val">faster-whisper</div>
+        <div class="si-note">Base model · CPU · ~1-3s latency</div>
+      </div>
+      <div class="stack-item">
+        <div class="si-label">Language Model</div>
+        <div class="si-val">Ollama (Docker)</div>
+        <div class="si-note">100% GPU · RTX 5090 · 32B param models</div>
+      </div>
+      <div class="stack-item">
+        <div class="si-label">Text → Speech</div>
+        <div class="si-val">Kokoro TTS</div>
+        <div class="si-note">bm_george · British male · Python 3.11</div>
+      </div>
+      <div class="stack-item">
+        <div class="si-label">Interface</div>
+        <div class="si-val">HTML + Python HTTP</div>
+        <div class="si-note">localhost:8080 · Dark UI · Mic + text input</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- V1.2 CHANGES -->
+  <section class="section">
+    <div class="section-label">Changelog</div>
+    <h2>What Changed in v1.2</h2>
+    <p>
+      Version 1.2 focused entirely on getting Jarvis's voice actually working.
+      What seemed like a simple TTS integration turned into a multi-session
+      debugging effort involving Python version compatibility, PyInstaller frozen
+      environments, Windows file permissions, and process scoping issues.
+      Here's what was fixed and added.
+    </p>
+
+    <div class="changelog">
+
+      <div class="change-card arch">
+        <div class="change-tag">Arch</div>
+        <div class="change-body">
+          <strong>Kokoro runs as a Python 3.11 subprocess, not bundled in the exe</strong>
+          <p>PyInstaller bundles code into a frozen environment that breaks Kokoro's
+          model download cache paths. The fix: the exe calls Python 3.11 directly as
+          a subprocess for every TTS request. Kokoro runs in its full environment
+          with all HuggingFace cache paths intact.</p>
+        </div>
+      </div>
+
+      <div class="change-card fixed">
+        <div class="change-tag">Fix</div>
+        <div class="change-body">
+          <strong>config.json moved to %APPDATA%\OllamaVoice\</strong>
+          <p>The app was crashing at startup with Permission Denied when trying
+          to write config.json to C:\Program Files\OllamaVoice\ — a read-only
+          directory. Config and setup flags now live in AppData which is always
+          writable.</p>
+        </div>
+      </div>
+
+      <div class="change-card fixed">
+        <div class="change-tag">Fix</div>
+        <div class="change-body">
+          <strong>Install path corrected to 64-bit Program Files</strong>
+          <p>Inno Setup was defaulting to Program Files (x86), causing the app
+          to run old cached versions. Added ArchitecturesInstallIn64BitMode and
+          switched to {autopf64} to force the correct 64-bit install path.</p>
+        </div>
+      </div>
+
+      <div class="change-card fixed">
+        <div class="change-tag">Fix</div>
+        <div class="change-body">
+          <strong>tempfile scope collision between /speak and /transcribe handlers</strong>
+          <p>The import tempfile inside the /speak try block was bleeding into
+          the /transcribe handler's local scope, causing UnboundLocalError crashes.
+          Fixed by aliasing to _tf inside the /speak block.</p>
+        </div>
+      </div>
+
+      <div class="change-card new">
+        <div class="change-tag">New</div>
+        <div class="change-body">
+          <strong>Speed control — 0.2x to 5.0x with 14 increments</strong>
+          <p>A dropdown in the header lets you dial Jarvis's speaking pace from
+          whisper-slow to rapid-fire. The selected speed is passed directly to
+          Kokoro's speed parameter and persisted in localStorage between sessions.</p>
+        </div>
+      </div>
+
+      <div class="change-card new">
+        <div class="change-tag">New</div>
+        <div class="change-body">
+          <strong>Stop button — instantly silence Jarvis mid-sentence</strong>
+          <p>A [|| STOP] button appears in the header while Jarvis is actively
+          speaking. One click pauses the current audio and clears the entire
+          speech queue. The button disappears automatically when speech ends.</p>
+        </div>
+      </div>
+
+      <div class="change-card new">
+        <div class="change-tag">New</div>
+        <div class="change-body">
+          <strong>Build cache auto-cleared on every compile run</strong>
+          <p>create_installer.bat now deletes the build/ and dist/ folders before
+          running PyInstaller, guaranteeing a fresh recompile every time. No more
+          running old cached code after source changes.</p>
+        </div>
+      </div>
+
+      <div class="change-card arch">
+        <div class="change-tag">Arch</div>
+        <div class="change-body">
+          <strong>Debug log at %TEMP%\ollamavoice_debug.log</strong>
+          <p>All TTS events, subprocess calls, exit codes, and errors are written
+          to a persistent log file regardless of console buffering. Essential for
+          diagnosing issues in a PyInstaller exe where stdout can be unreliable.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- WHY IT MATTERS -->
+  <section class="section">
+    <div class="section-label">Context</div>
+    <h2>Why Voice Makes It Feel Real</h2>
+
+    <div class="pullquote">
+      <p>"The gap between a chat interface and a genuine AI assistant
+      isn't intelligence — it's presence. Voice closes that gap."</p>
+    </div>
+
+    <p>
+      Text-based chat with a local LLM is impressive technically, but it still
+      feels like using a search engine. You type, you wait, you read. The interaction
+      is transactional. Adding voice changes the dynamic entirely — the model
+      responds in a way that occupies the same sensory channel as human conversation.
+    </p>
+    <p>
+      The choice of Kokoro's <code>bm_george</code> voice isn't arbitrary. A deep,
+      measured British male voice carries specific cultural associations: authority,
+      composure, intelligence. These associations prime you to perceive the model's
+      responses as more considered, more deliberate — even when the underlying
+      model is identical to what you'd access through a text interface.
+    </p>
+    <p>
+      The speed control matters for the same reason. At 0.6x Jarvis sounds
+      contemplative, like he's choosing words carefully. At 1.4x he sounds urgent,
+      operational. The ability to tune this lets you match the assistant's voice
+      to the nature of the task — a subtle but real contribution to perceived
+      intelligence and "lifelikeness."
+    </p>
+
+    <h3>The Full Local Stack</h3>
+    <p>
+      What makes OllamaVoice different from connecting to GPT-4 with voice is the
+      complete absence of external dependencies at runtime. The Whisper model runs
+      on your CPU. The LLM runs on your GPU inside Docker. Kokoro renders audio on
+      your Python 3.11 installation. Nothing leaves your machine. This matters for
+      privacy, latency, and cost — but also for the nature of the experience. There's
+      no rate limit, no server lag, no account. Just your hardware, talking to itself.
+    </p>
+  </section>
+
+  <!-- FUTURE -->
+  <section class="section">
+    <div class="section-label">Roadmap</div>
+    <h2>Where This Goes Next</h2>
+    <p>
+      The current architecture is a solid single-machine implementation.
+      The bottlenecks are well understood and the paths to improvement are clear —
+      though some require hardware investment that doesn't make financial sense yet.
+    </p>
+
+    <div class="vision-grid">
+
+      <div class="vision-card v1">
+        <div class="vision-num">01</div>
+        <h4>GPU-Accelerated TTS</h4>
+        <p>
+          Kokoro currently runs on CPU via a Python subprocess. A second GPU —
+          even a mid-range card — could render audio in real time instead of
+          the current 2-10 second latency. With CUDA acceleration, Kokoro
+          generates audio at roughly 50x real-time speed. A 200-word response
+          would render in under a second.
+        </p>
+      </div>
+
+      <div class="vision-card v2">
+        <div class="vision-num">02</div>
+        <h4>Dedicated Audio GPU</h4>
+        <p>
+          The ideal split: primary GPU (RTX 5090) handles LLM inference
+          exclusively, secondary GPU handles Whisper + Kokoro simultaneously.
+          This eliminates all VRAM competition and allows the LLM to
+          start streaming tokens while audio for the previous sentence
+          is still rendering — true pipeline parallelism.
+        </p>
+      </div>
+
+      <div class="vision-card v3">
+        <div class="vision-num">03</div>
+        <h4>Multi-GPU Model Sharding</h4>
+        <p>
+          Ollama supports tensor parallelism across multiple GPUs. With two
+          RTX 5090s (64GB combined VRAM), you could run 70B parameter models
+          at full precision — a significant quality jump over the current 32B
+          Q4 models. Response coherence and reasoning depth improve
+          substantially above 30B parameters.
+        </p>
+      </div>
+
+      <div class="vision-card v4">
+        <div class="vision-num">04</div>
+        <h4>Parallel Specialist Models</h4>
+        <p>
+          Enough VRAM enables simultaneous model loading — a fast 7B model
+          for quick factual queries, a 32B model for complex reasoning, a
+          code-specialized model on standby. A routing layer selects the
+          right model per query. The voice interface stays unified; the
+          backend becomes a model farm.
+        </p>
+      </div>
+
+    </div>
+
+    <h3>The Hardware Equation</h3>
+    <p>
+      The honest constraint is economics. A second RTX 5090 at current pricing
+      is ~$2,000-3,000. The marginal improvement over a single card — while
+      real and measurable — doesn't justify that cost for a personal assistant
+      project today. The architecture is ready for it, though. The Ollama
+      Docker setup already passes <code>--gpus all</code>; adding a second
+      card requires zero code changes.
+    </p>
+    <p>
+      The more interesting near-term opportunity is the dedicated audio GPU
+      path. A used RTX 3060 or 3070 for $200-300 would completely eliminate
+      the TTS latency bottleneck and make the voice interaction feel genuinely
+      real-time. That's a near-term upgrade worth considering.
+    </p>
+
+    <div class="pullquote">
+      <p>"The infrastructure for a truly capable home AI assistant
+      exists today. The question is just how much of it you want to run
+      at once — and what that's worth to you."</p>
+    </div>
+
+  </section>
+
+  <!-- TECH DETAIL -->
+  <section class="section">
+    <div class="section-label">Technical Notes</div>
+    <h2>Implementation Details</h2>
+
+    <h3>Why Python 3.11 for TTS</h3>
+    <p>
+      Kokoro requires PyTorch, which in turn requires specific CUDA and
+      numpy versions. Python 3.14 (the system default on this machine) had
+      no compatible prebuilt wheels for numpy 2.x at the time of development,
+      requiring compilation from source — which fails without a C compiler.
+      Python 3.11 has full prebuilt wheel support for the entire dependency
+      chain. Rather than downgrade the system Python, we install 3.11 in
+      parallel and invoke it as a subprocess specifically for TTS.
+    </p>
+
+    <h3>The Subprocess Architecture</h3>
+    <p>
+      Each call to <code>/speak</code> spawns a Python 3.11 process that
+      imports Kokoro, generates audio, writes it to a temp WAV file, and
+      exits. The main process reads the WAV and streams it to the browser.
+      This is slower than keeping Kokoro resident in memory, but it
+      completely avoids the PyInstaller frozen environment issues that
+      prevented the in-process approach from working. A future version
+      could run a persistent Kokoro server process to eliminate the
+      per-call startup overhead.
+    </p>
+
+    <h3>GPU Configuration</h3>
+    <p>
+      The Ollama container is configured with five environment variables
+      that together force 100% GPU utilization: <code>OLLAMA_NUM_GPU=999</code>,
+      <code>OLLAMA_GPU_LAYERS=999</code>, <code>OLLAMA_MAIN_GPU=0</code>,
+      <code>OLLAMA_FLASH_ATTENTION=1</code>, and
+      <code>OLLAMA_KV_CACHE_TYPE=q8_0</code>. The last two are critical —
+      flash attention and 8-bit KV cache quantization together reduce VRAM
+      usage enough that all 32B model layers fit on a single 32GB card
+      without spilling to CPU.
+    </p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>OllamaVoice v1.2 · March 2026</span>
+    <span>Built on RTX 5090 · Kokoro · Ollama · Docker · Python</span>
+  </div>
+</footer>
+
+</body>
+</html>
