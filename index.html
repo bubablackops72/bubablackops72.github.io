@@ -23,7 +23,6 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { scroll-behavior: smooth; }
 
     body {
@@ -36,7 +35,6 @@
       overflow-x: hidden;
     }
 
-    /* ── Noise texture overlay ── */
     body::before {
       content: '';
       position: fixed;
@@ -47,7 +45,6 @@
       opacity: 0.5;
     }
 
-    /* ── Layout ── */
     .wrapper {
       max-width: 860px;
       margin: 0 auto;
@@ -142,10 +139,7 @@
       animation: fadeUp 0.6s 0.2s forwards;
     }
 
-    .hero-title em {
-      font-style: italic;
-      color: var(--accent);
-    }
+    .hero-title em { font-style: italic; color: var(--accent); }
 
     .hero-bio {
       font-size: 1.05rem;
@@ -228,8 +222,6 @@
 
     .post-card:nth-child(1) { animation-delay: 0.1s; }
     .post-card:nth-child(2) { animation-delay: 0.2s; }
-    .post-card:nth-child(3) { animation-delay: 0.3s; }
-    .post-card:nth-child(4) { animation-delay: 0.4s; }
 
     .post-card::before {
       content: '';
@@ -242,11 +234,7 @@
       transition: transform 0.25s ease;
     }
 
-    .post-card:hover {
-      border-color: rgba(0, 229, 160, 0.3);
-      transform: translateX(4px);
-    }
-
+    .post-card:hover { border-color: rgba(0, 229, 160, 0.3); transform: translateX(4px); }
     .post-card:hover::before { transform: scaleY(1); }
 
     .post-meta {
@@ -254,6 +242,7 @@
       align-items: center;
       gap: 12px;
       margin-bottom: 10px;
+      flex-wrap: wrap;
     }
 
     .post-date {
@@ -303,70 +292,7 @@
       transition: color 0.2s, right 0.2s;
     }
 
-    .post-card:hover .post-arrow {
-      color: var(--accent);
-      right: 22px;
-    }
-
-    /* ── Projects section ── */
-    .projects-section { padding-bottom: 80px; }
-
-    .projects-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 16px;
-    }
-
-    .project-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 22px 24px;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      transition: border-color 0.2s, background 0.2s;
-    }
-
-    .project-card:hover {
-      border-color: rgba(0, 153, 255, 0.4);
-      background: var(--surface2);
-    }
-
-    .project-icon {
-      font-size: 1.4rem;
-      margin-bottom: 12px;
-    }
-
-    .project-name {
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      color: var(--accent2);
-      margin-bottom: 6px;
-    }
-
-    .project-desc {
-      font-size: 0.82rem;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    .project-stack {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 14px;
-    }
-
-    .stack-tag {
-      font-family: var(--font-mono);
-      font-size: 0.62rem;
-      color: var(--muted);
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      padding: 2px 7px;
-      border-radius: 3px;
-    }
+    .post-card:hover .post-arrow { color: var(--accent); right: 22px; }
 
     /* ── Footer ── */
     footer {
@@ -387,19 +313,9 @@
       gap: 12px;
     }
 
-    .footer-copy {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--muted);
-    }
-
+    .footer-copy { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
     .footer-copy span { color: var(--accent); }
-
-    .footer-links {
-      display: flex;
-      gap: 20px;
-      list-style: none;
-    }
+    .footer-links { display: flex; gap: 20px; list-style: none; }
 
     .footer-links a {
       font-family: var(--font-mono);
@@ -411,18 +327,15 @@
 
     .footer-links a:hover { color: var(--accent); }
 
-    /* ── Animations ── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Responsive ── */
     @media (max-width: 600px) {
       .nav-links { gap: 16px; }
       .post-card { padding: 22px 20px; }
       .post-arrow { display: none; }
-      .projects-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -431,10 +344,9 @@
   <!-- ── Navigation ── -->
   <nav>
     <div class="nav-inner">
-      <a href="#" class="nav-logo">dev<span>.</span>log<span>_</span></a>
+      <a href="/" class="nav-logo">dev<span>.</span>log<span>_</span></a>
       <ul class="nav-links">
-        <li><a href="#posts">Blog</a></li>
-        <li><a href="#projects">Projects</a></li>
+        <li><a href="/projects.html">Projects</a></li>
         <li><a href="https://github.com/bubablackops72" target="_blank">GitHub</a></li>
       </ul>
     </div>
@@ -456,6 +368,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
           github
         </a>
+        <a href="/projects.html" class="hero-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          projects
+        </a>
       </div>
     </section>
 
@@ -466,44 +382,41 @@
         <div class="section-line"></div>
       </div>
 
+      <a href="/posts/ollamavoice-devlog.html" class="post-card">
+        <div class="post-meta">
+          <span class="post-date">2026-03-27</span>
+          <span class="post-tag">devlog</span>
+          <span class="post-tag">ai</span>
+        </div>
+        <h2 class="post-title">OllamaVoice Dev Log — Building a Local AI Voice Assistant</h2>
+        <p class="post-excerpt">A behind-the-scenes look at building OllamaVoice — a fully local, voice-driven interface for Ollama AI models running entirely on your own hardware.</p>
+        <span class="post-arrow">→</span>
+      </a>
+
       <a href="/posts/openclaw-wsl2-fix.html" class="post-card">
         <div class="post-meta">
           <span class="post-date">2026-03-27</span>
           <span class="post-tag">troubleshooting</span>
+          <span class="post-tag">wsl2</span>
         </div>
         <h2 class="post-title">Fixing NemoClaw Onboarding on Windows 11 with WSL2 & Docker</h2>
         <p class="post-excerpt">How I got past step 5/7 of the NemoClaw onboarding process — fighting through CAP_SETPCAP errors, missing binaries, and Docker build failures in a WSL2 environment.</p>
         <span class="post-arrow">→</span>
       </a>
-    </section>
 
-    <!-- ── Projects ── -->
-    <section class="projects-section" id="projects">
-      <div class="section-header">
-        <span class="section-label">projects</span>
-        <div class="section-line"></div>
-      </div>
-      <div class="projects-grid">
-
-        <a href="https://github.com/bubablackops72/OllamaVoice" class="project-card" target="_blank">
-          <div class="project-icon">🎙️</div>
-          <div class="project-name">OllamaVoice</div>
-          <p class="project-desc">A voice-powered interface for interacting with Ollama local AI models.</p>
-          <div class="project-stack">
-            <span class="stack-tag">Python</span>
-            <span class="stack-tag">Ollama</span>
-            <span class="stack-tag">Voice AI</span>
-          </div>
-        </a>
-
-      </div>
     </section>
   </div><!-- /wrapper -->
 
   <!-- ── Footer ── -->
   <footer>
     <div class="footer-inner">
-      <p class="footer-copy">© 2025 <span>bubablackops72</span> — built with ♥ & GitHub Pages</p>
+      <p class="footer-copy">© 2026 <span>bubablackops72</span> — built with ♥ & GitHub Pages</p>
       <ul class="footer-links">
+        <li><a href="/projects.html">Projects</a></li>
         <li><a href="https://github.com/bubablackops72" target="_blank">GitHub</a></li>
       </ul>
+    </div>
+  </footer>
+
+</body>
+</html>

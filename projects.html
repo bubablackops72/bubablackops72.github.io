@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Projects — bubablackops72</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --surface: #13161b;
+      --surface2: #1c2028;
+      --border: #272c35;
+      --text: #e8eaf0;
+      --muted: #7a8294;
+      --accent: #00e5a0;
+      --accent2: #0099ff;
+      --tag-bg: rgba(0, 229, 160, 0.08);
+      --tag-bg2: rgba(0, 153, 255, 0.08);
+      --font-mono: 'Syne Mono', monospace;
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    .wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Navigation ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 15, 18, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+    }
+
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--accent);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-logo span { color: var(--muted); }
+
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+
+    .nav-links a {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    /* ── Page header ── */
+    .page-header {
+      padding: 70px 0 50px;
+      position: relative;
+    }
+
+    .page-header::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -200px; right: -200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.3;
+    }
+
+    .page-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.1s forwards;
+    }
+
+    .page-title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.9rem, 4vw, 2.8rem);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.2s forwards;
+    }
+
+    .page-desc {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.7;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.3s forwards;
+    }
+
+    /* ── Section label ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      margin-top: 12px;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .section-line { flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Project cards ── */
+    .projects-section { padding-bottom: 100px; }
+
+    .project-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto auto;
+      gap: 0 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.2s, background 0.2s;
+      opacity: 0;
+      animation: fadeUp 0.5s forwards;
+    }
+
+    .project-card:nth-child(1) { animation-delay: 0.1s; }
+    .project-card:nth-child(2) { animation-delay: 0.2s; }
+    .project-card:nth-child(3) { animation-delay: 0.3s; }
+
+    .project-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent2);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform 0.25s ease;
+    }
+
+    .project-card:hover {
+      border-color: rgba(0, 153, 255, 0.35);
+      background: var(--surface2);
+      transform: translateX(4px);
+    }
+
+    .project-card:hover::before { transform: scaleY(1); }
+
+    .project-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+      grid-column: 1;
+    }
+
+    .project-icon {
+      font-size: 1.4rem;
+      line-height: 1;
+    }
+
+    .project-name {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--accent2);
+      letter-spacing: -0.01em;
+    }
+
+    .project-status {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .status-active {
+      color: var(--accent);
+      background: var(--tag-bg);
+      border: 1px solid rgba(0, 229, 160, 0.2);
+    }
+
+    .status-wip {
+      color: #ffb347;
+      background: rgba(255, 179, 71, 0.08);
+      border: 1px solid rgba(255, 179, 71, 0.2);
+    }
+
+    .project-desc {
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 18px;
+      grid-column: 1;
+    }
+
+    .project-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      grid-column: 1 / -1;
+    }
+
+    .project-stack {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .stack-tag {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+
+    .project-links {
+      display: flex;
+      gap: 12px;
+    }
+
+    .proj-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 12px;
+      transition: all 0.2s;
+    }
+
+    .proj-link:hover {
+      color: var(--accent2);
+      border-color: var(--accent2);
+      background: var(--tag-bg2);
+    }
+
+    .proj-link.devlog:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--tag-bg);
+    }
+
+    /* ── "Coming soon" empty state ── */
+    .coming-soon {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--border);
+      padding: 28px 0 8px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-copy { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+    .footer-copy span { color: var(--accent); }
+    .footer-links { display: flex; gap: 20px; list-style: none; }
+
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--accent); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .nav-links { gap: 16px; }
+      .project-card { padding: 22px 20px; grid-template-columns: 1fr; }
+      .project-links { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navigation ── -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">dev<span>.</span>log<span>_</span></a>
+      <ul class="nav-links">
+        <li><a href="/projects.html" class="active">Projects</a></li>
+        <li><a href="https://github.com/bubablackops72" target="_blank">GitHub</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="wrapper">
+
+    <!-- ── Page Header ── -->
+    <div class="page-header">
+      <p class="page-label">// all projects</p>
+      <h1 class="page-title">Things I've Built</h1>
+      <p class="page-desc">
+        A collection of my software projects — each card links to the GitHub repo
+        and any related dev logs or write-ups I've published.
+      </p>
+    </div>
+
+    <!-- ── Projects ── -->
+    <section class="projects-section">
+
+      <div class="section-header">
+        <span class="section-label">active projects</span>
+        <div class="section-line"></div>
+      </div>
+
+      <!-- OllamaVoice -->
+      <div class="project-card">
+        <div class="project-top">
+          <span class="project-icon">🎙️</span>
+          <span class="project-name">OllamaVoice</span>
+          <span class="project-status status-active">active</span>
+        </div>
+        <p class="project-desc">
+          A fully local, voice-driven interface for interacting with Ollama AI models.
+          No cloud, no API keys — runs entirely on your own hardware. Built to make
+          local AI feel as natural as talking to an assistant.
+        </p>
+        <div class="project-footer">
+          <div class="project-stack">
+            <span class="stack-tag">Python</span>
+            <span class="stack-tag">Ollama</span>
+            <span class="stack-tag">Voice AI</span>
+            <span class="stack-tag">STT/TTS</span>
+          </div>
+          <div class="project-links">
+            <a href="/posts/ollamavoice-devlog.html" class="proj-link devlog">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+              dev log
+            </a>
+            <a href="https://github.com/bubablackops72/OllamaVoice" class="proj-link" target="_blank">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+              github
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top: 48px;">
+        <span class="section-label">related write-ups</span>
+        <div class="section-line"></div>
+      </div>
+
+      <!-- NemoClaw write-up card -->
+      <div class="project-card">
+        <div class="project-top">
+          <span class="project-icon">🐋</span>
+          <span class="project-name">NemoClaw / WSL2 Fix</span>
+          <span class="project-status status-wip">write-up</span>
+        </div>
+        <p class="project-desc">
+          Not a project repo, but a detailed troubleshooting guide for getting the NemoClaw
+          OpenClaw agent running inside WSL2 and Docker on Windows 11 — covering four layers
+          of errors that the official docs don't mention.
+        </p>
+        <div class="project-footer">
+          <div class="project-stack">
+            <span class="stack-tag">Docker</span>
+            <span class="stack-tag">WSL2</span>
+            <span class="stack-tag">Windows 11</span>
+            <span class="stack-tag">Node.js</span>
+          </div>
+          <div class="project-links">
+            <a href="/posts/openclaw-wsl2-fix.html" class="proj-link devlog">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+              read post
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <p class="coming-soon">// more projects coming soon_</p>
+
+    </section>
+  </div><!-- /wrapper -->
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="footer-inner">
+      <p class="footer-copy">© 2026 <span>bubablackops72</span> — built with ♥ & GitHub Pages</p>
+      <ul class="footer-links">
+        <li><a href="/projects.html">Projects</a></li>
+        <li><a href="https://github.com/bubablackops72" target="_blank">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+
+</body>
+</html>
