@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fixing NemoClaw on WSL2 & Docker — bubablackops72</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --surface: #13161b;
+      --surface2: #1c2028;
+      --border: #272c35;
+      --text: #e8eaf0;
+      --muted: #7a8294;
+      --accent: #00e5a0;
+      --accent2: #0099ff;
+      --tag-bg: rgba(0, 229, 160, 0.08);
+      --code-bg: #0a0c0f;
+      --font-mono: 'Syne Mono', monospace;
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.75;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 15, 18, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+    }
+
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--accent);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-logo span { color: var(--muted); }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── Article layout ── */
+    .wrapper {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 60px 24px 100px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Back link ── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 48px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--accent); }
+
+    /* ── Post header ── */
+    .post-header {
+      margin-bottom: 48px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+      opacity: 0;
+      animation: fadeUp 0.6s 0.1s forwards;
+    }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .post-date {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .post-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--accent);
+      background: var(--tag-bg);
+      border: 1px solid rgba(0, 229, 160, 0.2);
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .post-title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 18px;
+    }
+
+    .post-subtitle {
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── Article body ── */
+    .post-body {
+      opacity: 0;
+      animation: fadeUp 0.6s 0.25s forwards;
+    }
+
+    .post-body p {
+      margin-bottom: 22px;
+      font-size: 1rem;
+      color: #c8ccd6;
+    }
+
+    .post-body h2 {
+      font-family: var(--font-serif);
+      font-size: 1.45rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 48px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .post-body h3 {
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin: 32px 0 12px;
+    }
+
+    /* ── Round cards ── */
+    .round-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 24px 28px;
+      margin: 28px 0;
+    }
+
+    .round-card .round-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .round-card .round-title {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .round-card p {
+      font-size: 0.92rem !important;
+      margin-bottom: 10px !important;
+    }
+
+    /* ── Error blocks ── */
+    .error-block {
+      background: rgba(255, 80, 80, 0.06);
+      border: 1px solid rgba(255, 80, 80, 0.2);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: #ff8080;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .error-block::before {
+      content: '✗ error: ';
+      color: #ff5050;
+      font-weight: bold;
+    }
+
+    /* ── Code blocks ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px 22px;
+      overflow-x: auto;
+      margin: 16px 0 24px;
+      position: relative;
+    }
+
+    pre code {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: #a8d8b0;
+      line-height: 1.7;
+    }
+
+    .code-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    /* ── Inline code ── */
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--accent);
+      background: var(--tag-bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 229, 160, 0.15);
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: #a8d8b0;
+    }
+
+    /* ── Takeaways list ── */
+    .takeaways {
+      list-style: none;
+      margin: 16px 0 24px;
+    }
+
+    .takeaways li {
+      display: flex;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+      color: #c8ccd6;
+    }
+
+    .takeaways li:last-child { border-bottom: none; }
+
+    .takeaways li::before {
+      content: '→';
+      font-family: var(--font-mono);
+      color: var(--accent);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── Epilogue callout ── */
+    .epilogue {
+      background: var(--surface);
+      border: 1px solid rgba(0, 229, 160, 0.2);
+      border-radius: 8px;
+      padding: 24px 28px;
+      margin-top: 48px;
+      font-style: italic;
+      color: var(--muted);
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      line-height: 1.75;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .footer-copy span { color: var(--accent); }
+
+    .footer-links { display: flex; gap: 20px; list-style: none; }
+
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--accent); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .nav-links { gap: 16px; }
+      .round-card { padding: 18px 18px; }
+      pre { padding: 14px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">dev<span>.</span>log<span>_</span></a>
+      <ul class="nav-links">
+        <li><a href="/#posts">Blog</a></li>
+        <li><a href="/#projects">Projects</a></li>
+        <li><a href="https://github.com/bubablackops72" target="_blank">GitHub</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="wrapper">
+    <a href="/" class="back-link">← back to blog</a>
+
+    <header class="post-header">
+      <div class="post-meta">
+        <span class="post-date">2026-03-27</span>
+        <span class="post-tag">troubleshooting</span>
+        <span class="post-tag">wsl2</span>
+        <span class="post-tag">docker</span>
+      </div>
+      <h1 class="post-title">Fixing NemoClaw Onboarding on Windows 11 with WSL2 & Docker</h1>
+      <p class="post-subtitle">
+        How I got past step 5/7 of the NemoClaw setup — fighting through Linux capability errors,
+        missing binaries, and Docker build failures that only show up in a WSL2 environment.
+      </p>
+    </header>
+
+    <article class="post-body">
+
+      <p>
+        Setting up NemoClaw's OpenClaw agent on Windows 11 via WSL2 and Docker Desktop sounds
+        straightforward — until it isn't. The official onboarding flow gets to step 5/7 and then hits
+        a wall of Linux-specific errors that the docs don't cover. Here's every obstacle I ran into
+        and exactly how I fixed each one.
+      </p>
+
+      <h2>The Obstacles & Solutions</h2>
+
+      <!-- Round 1 -->
+      <div class="round-card">
+        <div class="round-label">Round 1</div>
+        <div class="round-title">🚧 CAP_SETPCAP Wall</div>
+        <div class="error-block">unable to raise CAP_SETPCAP for BSET changes: Operation not permitted</div>
+        <p><strong>Root Cause:</strong> OpenClaw's security hardening tried to drop Linux capabilities including
+        <code>CAP_SETPCAP</code>, which WSL2 blocks due to its virtualized kernel.</p>
+        <p><strong>Fix:</strong> Edit <code>~/.nemoclaw/source/scripts/nemoclaw-start.sh</code> and bypass the capability-dropping block:</p>
+        <div class="code-label">nemoclaw-start.sh</div>
+        <pre><code># Changed from:
+if [ "${NEMOCLAW_CAPS_DROPPED:-}" != "1" ] && command -v capsh >/dev/null 2>&1; then
+
+# To:
+if false && [ "${NEMOCLAW_CAPS_DROPPED:-}" != "1" ] && command -v capsh >/dev/null 2>&1; then</code></pre>
+        <p><strong>Result:</strong> Container startup progressed past the capability initialization phase.</p>
+      </div>
+
+      <!-- Round 2 -->
+      <div class="round-card">
+        <div class="round-label">Round 2</div>
+        <div class="round-title">🚧 The Missing Binary</div>
+        <div class="error-block">command -v openclaw returned empty (binary not found in PATH/runtime)</div>
+        <p><strong>Root Cause:</strong> While <code>openclaw</code> existed during the Docker build phase, it wasn't
+        installed globally or persisted into the final runtime image.</p>
+        <p><strong>Fix:</strong> Updated the Dockerfile builder stage to explicitly install the CLI globally:</p>
+        <div class="code-label">Dockerfile (builder stage)</div>
+        <pre><code>WORKDIR /opt/nemoclaw
+RUN npm install          # Build dependencies
+RUN npm run build        # Compile TypeScript → dist/
+RUN npm install -g openclaw  # Global CLI installation</code></pre>
+        <p><strong>Result:</strong> <code>/usr/local/bin/openclaw</code> became available at runtime.</p>
+      </div>
+
+      <!-- Round 3 -->
+      <div class="round-card">
+        <div class="round-label">Round 3</div>
+        <div class="round-title">🚧 npm ci vs. package-lock.json</div>
+        <div class="error-block">npm error: The npm ci command can only install with an existing package-lock.json</div>
+        <p><strong>Root Cause:</strong> The build script used <code>npm ci --omit=dev</code> but only copied
+        <code>package.json</code> — not <code>package-lock.json</code> — into the build context.</p>
+        <p><strong>Fix (Option 1 — Preferred):</strong> Copy the lockfile in <code>setup.sh</code>:</p>
+        <div class="code-label">setup.sh</div>
+        <pre><code>cp "$REPO_DIR/nemoclaw/package.json" "$BUILD_CTX/"
+cp "$REPO_DIR/nemoclaw/package-lock.json" "$BUILD_CTX/" 2>/dev/null || true</code></pre>
+        <p><strong>Fix (Option 2 — Quick):</strong> Swap <code>npm ci --omit=dev</code> → <code>npm install --omit=dev</code> in your Dockerfile. Less strict but gets the job done.</p>
+        <p><strong>Result:</strong> Dependencies installed correctly without lockfile errors.</p>
+      </div>
+
+      <!-- Round 4 -->
+      <div class="round-card">
+        <div class="round-label">Round 4</div>
+        <div class="round-title">🚧 Missing dist/ Directory</div>
+        <div class="error-block">COPY failed: stat opt/nemoclaw/dist/: file does not exist</div>
+        <p><strong>Root Cause:</strong> The Docker build copied source code but never ran the TypeScript
+        compilation step, so <code>/dist/</code> was empty when the runtime stage tried to copy from it.</p>
+        <p><strong>Fix:</strong> Explicitly add the build step in the Dockerfile:</p>
+        <div class="code-label">Dockerfile</div>
+        <pre><code>RUN npm install
+RUN npm run build   # Critical: generates /dist/
+RUN npm install -g openclaw</code></pre>
+        <p><strong>Result:</strong> <code>/opt/nemoclaw/dist/</code> populated correctly and the COPY succeeded.</p>
+      </div>
+
+      <h2>Final Working Dockerfile</h2>
+      <p>Here's the complete Dockerfile snippet that ties all four fixes together:</p>
+      <div class="code-label">Dockerfile (full)</div>
+      <pre><code># Builder stage
+FROM node:22-slim AS builder
+WORKDIR /opt/nemoclaw
+COPY nemoclaw/package.json nemoclaw/tsconfig.json ./
+COPY nemoclaw/src/ ./src/
+RUN npm install
+RUN npm run build  # ← Non-negotiable for TS projects
+
+# Runtime stage
+FROM ghcr.io/nvidia/nemoclaw/sandbox-base:latest
+WORKDIR /opt/nemoclaw
+COPY --from=builder /opt/nemoclaw/dist/ ./dist/
+COPY nemoclaw/openclaw.plugin.json ./
+COPY nemoclaw/package.json nemoclaw/package-lock.json ./
+RUN npm install --omit=dev
+RUN npm install -g openclaw  # ← Ensures CLI availability
+ENTRYPOINT ["/usr/local/bin/nemoclaw-start"]</code></pre>
+
+      <h2>Key Takeaways for WSL2 Users</h2>
+      <ul class="takeaways">
+        <li><strong>WSL2 ≠ Bare Metal Linux.</strong> Capability manipulation like <code>CAP_SETPCAP</code> and seccomp profiling often fails — be ready to bypass hardening scripts.</li>
+        <li><strong>Separate build vs. runtime stages clearly.</strong> Builder handles dev dependencies and compilation; runtime handles production deps and global CLI tools. Don't blur the line.</li>
+        <li><strong>Never assume binaries exist.</strong> Just because something is installed during the build phase doesn't mean it's available at runtime. Explicitly install global CLIs in the runtime stage.</li>
+        <li><strong>Lockfiles matter.</strong> <code>npm ci</code> is strict by design — if you use it, make sure <code>package-lock.json</code> is in the build context.</li>
+        <li><strong>Debug top-to-bottom.</strong> Each error layer revealed the next. Fix the first thing, rebuild, repeat.</li>
+      </ul>
+
+      <div class="epilogue">
+        This journey turned a "secure by default" cloud-native container setup into a WSL2-friendly
+        development environment — proving that with persistence and systematic debugging, even the most
+        restrictive environments can be tamed. The 🦞 was well earned.
+      </div>
+
+    </article>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <p class="footer-copy">© 2026 <span>bubablackops72</span> — built with ♥ & GitHub Pages</p>
+      <ul class="footer-links">
+        <li><a href="https://github.com/bubablackops72" target="_blank">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+
+</body>
+</html>
